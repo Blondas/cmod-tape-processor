@@ -1,8 +1,8 @@
 #include <spdlog/spdlog.h>
 #include "file_reader.hpp"
 
-
-int main(int argc, char* argv[]) {
+#ifndef UNIT_TESTS  // Add this guard
+int main(const int argc, char* argv[]) {
     if (argc != 2) {
         spdlog::error("Invalid arguments, filename needed");
         return 1;
@@ -15,3 +15,4 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 }
+#endif  // UNIT_TESTS

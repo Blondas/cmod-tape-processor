@@ -1,4 +1,4 @@
-#include "file_reader.hpp"
+#include <file_reader.hpp>
 #include <spdlog/spdlog.h>
 #include <fstream>
 #include <filesystem>
@@ -11,7 +11,7 @@ std::vector<char> readFile(const std::string& filename) {
     }
     
     // Get file size
-    auto size = std::filesystem::file_size(filename);
+    const auto size = std::filesystem::file_size(filename);
     
     // Reserve space and read
     std::vector<char> data(size);
