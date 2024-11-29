@@ -1,18 +1,10 @@
-#include <spdlog/spdlog.h>
-#include "file_reader.hpp"
+#include "application.cpp"
 
-#ifndef UNIT_TESTS  // Add this guard
+#ifndef UNIT_TESTS
 int main(const int argc, char* argv[]) {
-    if (argc != 2) {
-        spdlog::error("Invalid arguments, filename needed");
-        return 1;
-    }
+    // return Application::run(argc, argv);
 
-    try {
-        auto fileData = readFile(argv[1]);
-    } catch (const std::exception& e) {
-        spdlog::critical("Program failed: {}", e.what());
-        return 1;
-    }
+    Application::convertEbcdicFileToAscii("resources/TAPE1.ebcdic", 128);
+    return 0;
 }
-#endif  // UNIT_TESTS
+#endif

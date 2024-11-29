@@ -25,7 +25,9 @@ file(GLOB_RECURSE data resources/*)
 
 # The data is just added to the executable, because in some IDEs (QtCreator) 
 # files are invisible when they are not explicitly part of the project.
-add_executable(prototype ${sources} ${data})
+add_executable(prototype ${sources} ${data}
+        src/main/Application.cpp
+)
 
 # Just for example add some compiler flags.
 #target_compile_options(example PUBLIC -std=c++1y -Wall -Wfloat-conversion)
