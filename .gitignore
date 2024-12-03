@@ -67,3 +67,4 @@ vendor/
 deps/
 
 *.dSYM/
+prompt_*.md
