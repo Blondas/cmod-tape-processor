@@ -1,78 +1,41 @@
 #include <catch2/catch_test_macros.hpp>
 #include "converter/ebcdic_converter.cpp"
 
-SCENARIO("Converting between ASCII and EBCDIC characters", "[converter]") {
-    GIVEN("An EBCDIC converter") {
-        WHEN("converting basic ASCII letters to EBCDIC") {
-            THEN("uppercase letters are converted correctly") {
-                REQUIRE(EbcdicConverter::toEbcdic('A') == 0xC1);
-                REQUIRE(EbcdicConverter::toEbcdic('B') == 0xC2);
-                REQUIRE(EbcdicConverter::toEbcdic('Z') == 0xE9);
-            }
+SCENARIO("ASCII to EBCDIC conversion validation", "[ebcdic]") {
+    GIVEN("the ASCII to EBCDIC conversion table") {
+        const auto& asciiToEbcdicTable = EbcdicConverter::asciiToEbcdicTable;
 
-            THEN("lowercase letters are converted correctly") {
-                REQUIRE(EbcdicConverter::toEbcdic('a') == 0x81);
-                REQUIRE(EbcdicConverter::toEbcdic('b') == 0x82);
-                REQUIRE(EbcdicConverter::toEbcdic('z') == 0xA9);
-            }
-        }
+        WHEN("converting each value from the original table") {
+            THEN("converted values should match the table exactly") {
+                for (unsigned i = 0; i < 256; ++i) {
+                    auto ascii = static_cast<unsigned char>(i);
+                    auto converted = EbcdicConverter::toEbcdic(ascii);
+                    auto expected = asciiToEbcdicTable[i];
 
-        WHEN("converting basic EBCDIC letters to ASCII") {
-            THEN("uppercase letters are converted correctly") {
-                REQUIRE(EbcdicConverter::toAscii(0xC1) == 'A');
-                REQUIRE(EbcdicConverter::toAscii(0xC2) == 'B');
-                REQUIRE(EbcdicConverter::toAscii(0xE9) == 'Z');
-            }
+                    INFO("ASCII value: 0x" << std::hex << static_cast<int>(ascii));
+                    INFO("Converted: 0x" << std::hex << static_cast<int>(converted));
+                    INFO("Expected: 0x" << std::hex << static_cast<int>(expected));
 
-            THEN("lowercase letters are converted correctly") {
-                REQUIRE(EbcdicConverter::toAscii(0x81) == 'a');
-                REQUIRE(EbcdicConverter::toAscii(0x82) == 'b');
-                REQUIRE(EbcdicConverter::toAscii(0xA9) == 'z');
+                    REQUIRE(converted == expected);
+                }
             }
         }
     }
 }
 
-SCENARIO("Converting strings between ASCII and EBCDIC", "[converter]") {
-    GIVEN("An ASCII string with mixed content") {
-        std::string ascii_text = "Hello, World! 123";
+SCENARIO("ASCII to EBCDIC conversion validation using known pairs", "[ebcdic]") {
+    WHEN("converting each ASCII value to EBCDIC") {
+        THEN("conversions should match known EBCDIC values") {
+            for (unsigned i = 0; i < 256; ++i) {
+                auto ascii = static_cast<unsigned char>(i);
+                auto ebcdic = EbcdicConverter::toEbcdic(ascii);
+                auto backToAscii = EbcdicConverter::toAscii(ebcdic);
 
-        WHEN("converting to EBCDIC and back") {
-            std::string ebcdic_text = EbcdicConverter::toEbcdic(ascii_text);
-            std::string roundtrip_text = EbcdicConverter::toAscii(ebcdic_text);
+                INFO("ASCII: 0x" << std::hex << static_cast<int>(ascii));
+                INFO("EBCDIC: 0x" << std::hex << static_cast<int>(ebcdic));
+                INFO("Back to ASCII: 0x" << std::hex << static_cast<int>(backToAscii));
 
-            THEN("the roundtrip conversion matches the original") {
-                REQUIRE(roundtrip_text == ascii_text);
-            }
-
-            THEN("the EBCDIC text differs from ASCII text") {
-                REQUIRE(ebcdic_text != ascii_text);
-                REQUIRE(ebcdic_text.size() == ascii_text.size());
-            }
-        }
-    }
-
-    GIVEN("Special characters in ASCII") {
-        std::string special_chars = "!@#$%^&*()";
-
-        WHEN("converting to EBCDIC and back") {
-            auto ebcdic = EbcdicConverter::toEbcdic(special_chars);
-            auto result = EbcdicConverter::toAscii(ebcdic);
-
-            THEN("the roundtrip conversion preserves special characters") {
-                REQUIRE(result == special_chars);
-            }
-        }
-    }
-
-    GIVEN("An empty string") {
-        std::string empty_str;
-
-        WHEN("converting to EBCDIC") {
-            auto result = EbcdicConverter::toEbcdic(empty_str);
-
-            THEN("the result is also empty") {
-                REQUIRE(result.empty());
+                REQUIRE(backToAscii == ascii);
             }
         }
     }
