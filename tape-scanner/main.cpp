@@ -2,7 +2,7 @@
 
 int main(const int argc, char* argv[]) {
     // return Application::run(argc, argv);
-    // Application::convertEbcdicFileToAscii("resources/TAPE1.ebcdic", 128);
+    Application::convertEbcdicFileToAscii("resources/TAPE1.ebcdic", 128);
 
     if (argc != 3) {
         std::cerr << "Usage: " << argv[0] << " <tape-location> <collection-name>\n";
