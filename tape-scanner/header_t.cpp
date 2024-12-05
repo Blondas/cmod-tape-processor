@@ -1,8 +1,8 @@
 #include <cstdint>
 #include <string>
-#include <nlohmann/json.hpp>
+#include <sstream>
 #include <string_view>
-#include "ebcdic_converter.cpp"  // Include the actual implementation instead of forward declaration
+#include "ebcdic_converter.cpp"
 
 struct header_t {
     char collection_name[44];  // right space padding
@@ -18,7 +18,7 @@ struct header_t {
     };
     uint8_t oam_tag[28];     // *OAM zero padded
 
-    nlohmann::json to_json(size_t offset) const {
+    std::string to_string(size_t offset) const {
         // Convert EBCDIC fields to ASCII
         std::string ascii_collection = EbcdicConverter::toAscii(std::string_view(collection_name, 44));
         std::string ascii_filename = EbcdicConverter::toAscii(std::string_view(file_name, 44));
@@ -29,15 +29,18 @@ struct header_t {
         ascii_filename = ascii_filename.substr(0, ascii_filename.find_last_not_of(' ') + 1);
         ascii_oam = ascii_oam.substr(0, ascii_oam.find_last_not_of('\0') + 1);
 
-        return {
-                {"header_offset", offset},
-                // {"collection_name", ascii_collection},
-                // {"file_name", ascii_filename},
-                {"filesize", filesize},
-                {"unknown", _unknown},
-                {"segsize", segsize},
-                {"oam_tag", ascii_oam}
-        };
+        std::stringstream ss;
+        ss << "{\n";
+        ss << "  \"header_offset\": " << offset << ",\n";
+        // ss << "  \"collection_name\": \"" << ascii_collection << "\",\n";
+        // ss << "  \"file_name\": \"" << ascii_filename << "\",\n";
+        ss << "  \"filesize\": " << filesize << ",\n";
+        ss << "  \"unknown\": " << _unknown << ",\n";
+        ss << "  \"segsize\": " << segsize << ",\n";
+        ss << "  \"oam_tag\": \"" << ascii_oam << "\"\n";
+        ss << "}";
+
+        return ss.str();
     }
 };
 static_assert(sizeof(header_t) <= 128, "Header must be less than or equal to 128 bytes");

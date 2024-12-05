@@ -1,13 +1,14 @@
 #include <iostream>
 #include <filesystem>
 #include <fstream>
+#include <map>
+#include <sstream>
 
 #include "mmap_file_reader.cpp"
 #include "tape_scanner.cpp"
 
 class Application {
 public:
-    // read ebcdic tape > open with mmap > read first 128 bytes > translate to ASCII > print and save
     static void convertEbcdicFileToAscii(const std::string& filename, const size_t bytesToConvert) {
         const MmapFileReader reader(filename);
 
@@ -39,12 +40,11 @@ public:
             std::cout << "Found " << headers.size() << " headers in the tape" << std::endl;
 
             // Create grouped JSON output
-            nlohmann::json output = createGroupedJson(headers);
+            std::string output = createGroupedJson(headers);
 
             // Print to console
             std::cout << "Converting headers to JSON" << std::endl;
-            std::string json_output = output.dump(2);
-            std::cout << json_output << std::endl;
+            std::cout << output << std::endl;
 
             // Save to file
             std::string output_filename = filename + "_headers.json";
@@ -55,7 +55,7 @@ public:
                 throw std::runtime_error("Failed to create output file: " + output_filename);
             }
 
-            out_file << json_output;
+            out_file << output;
             std::cout << "Scan completed successfully" << std::endl;
 
         } catch (const std::exception& e) {
@@ -65,11 +65,11 @@ public:
     }
 
 private:
-    static nlohmann::json createGroupedJson(const std::vector<std::tuple<size_t, header_t>>& headers) {
+    static std::string createGroupedJson(const std::vector<std::tuple<size_t, header_t>>& headers) {
         std::cout << "Creating grouped JSON output" << std::endl;
 
         // Map to group headers by collection_name + filename
-        std::map<std::pair<std::string, std::string>, std::vector<nlohmann::json>> grouped_headers;
+        std::map<std::pair<std::string, std::string>, std::vector<std::string>> grouped_headers;
 
         for (const auto& [offset, header] : headers) {
             // Get ASCII versions for grouping
@@ -81,27 +81,44 @@ private:
             ascii_filename = ascii_filename.substr(0, ascii_filename.find_last_not_of(' ') + 1);
 
             auto key = std::make_pair(ascii_collection, ascii_filename);
-            grouped_headers[key].push_back(header.to_json(offset));
+            grouped_headers[key].push_back(header.to_string(offset));
         }
 
         // Create final JSON array
-        nlohmann::json output = nlohmann::json::array();
+        std::stringstream output;
+        output << "[\n";
+        bool first_group = true;
 
         for (const auto& [key, segments] : grouped_headers) {
             const auto& [collection, filename] = key;
 
-            nlohmann::json group = {
-                {"collection_name", collection},
-                {"file_name", filename},
-                {"segment_number", segments.size()},
-                {"segments", segments}
-            };
+            if (!first_group) {
+                output << ",\n";
+            }
+            first_group = false;
 
-            output.push_back(group);
+            output << "  {\n";
+            output << "    \"collection_name\": \"" << collection << "\",\n";
+            output << "    \"file_name\": \"" << filename << "\",\n";
+            output << "    \"segment_number\": " << segments.size() << ",\n";
+            output << "    \"segments\": [\n";
+
+            // Add segments
+            for (size_t i = 0; i < segments.size(); ++i) {
+                output << "      " << segments[i];
+                if (i < segments.size() - 1) {
+                    output << ",";
+                }
+                output << "\n";
+            }
+
+            output << "    ]\n";
+            output << "  }";
         }
+        output << "\n]";
 
-        std::cout << "JSON creation completed. Found " << output.size()
+        std::cout << "JSON creation completed. Found " << grouped_headers.size()
                   << " unique collection/filename pairs" << std::endl;
-        return output;
+        return output.str();
     }
 };

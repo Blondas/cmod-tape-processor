@@ -68,3 +68,6 @@ deps/
 
 *.dSYM/
 prompt_*.md
+
+program
+TAPE1.ebcdic*
