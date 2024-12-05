@@ -2,7 +2,9 @@
 #include <tuple>
 #include <span>
 #include <cstring>
-#include <spdlog/spdlog.h>
+#include <iomanip>
+#include <sstream>
+#include <iostream>
 #include "mmap_file_reader.cpp"
 #include "header_t.cpp"
 
@@ -27,7 +29,7 @@ public:
         const char* data = reader.data();
         const size_t file_size = reader.size();
 
-        spdlog::debug("Starting tape scan. File size: {} bytes", file_size);
+        std::cout << "Starting tape scan. File size: " << file_size << " bytes" << std::endl;
 
         // Convert collection name to EBCDIC for comparison
         std::string collection_padded = std::string(collection_name);
@@ -35,13 +37,15 @@ public:
 
         // Convert the padded string to EBCDIC
         std::string ebcdic_collection = EbcdicConverter::toEbcdic(collection_padded);
-        spdlog::debug("Collection name converted to EBCDIC and padded: {}", toHex(ebcdic_collection));
+        std::cout << "Collection name converted to EBCDIC and padded: "
+                  << toHex(ebcdic_collection) << std::endl;
 
         size_t current_pos = 0;
         while (current_pos + HEADER_SIZE <= file_size) {
             // Check if we have a matching collection name
             if (std::memcmp(data + current_pos, ebcdic_collection.data(), 44) == 0) {
-                spdlog::debug("Found matching collection name at position {}", current_pos);
+                std::cout << "Found matching collection name at position "
+                         << current_pos << std::endl;
 
                 header_t header;
                 std::memcpy(&header, data + current_pos, sizeof(header_t));
@@ -50,22 +54,23 @@ public:
                 header.filesize = 0;
                 header.segsize = 0;
 
-                spdlog::debug("Header values at {}: filesize: {}, segsize: {}",
-                    current_pos, header.filesize, header.segsize);
+                std::cout << "Header values at " << current_pos
+                         << ": filesize: " << header.filesize
+                         << ", segsize: " << header.segsize << std::endl;
 
                 results.emplace_back(current_pos, header);
 
                 // Move to next segment using the HEADER_SIZE since we're not using segsize
                 current_pos += HEADER_SIZE;
-                spdlog::debug("Moving to next segment at position {}", current_pos);
+                std::cout << "Moving to next segment at position " << current_pos << std::endl;
             } else {
                 // If no match, move to next potential header
                 current_pos += HEADER_SIZE;
-                spdlog::trace("No match at {}, moving to next header position", current_pos - HEADER_SIZE);
+                // Note: Removed trace-level logging since it's too verbose for console output
             }
         }
 
-        spdlog::info("Scan complete. Found {} headers", results.size());
+        std::cout << "Scan complete. Found " << results.size() << " headers" << std::endl;
         return results;
     }
 };

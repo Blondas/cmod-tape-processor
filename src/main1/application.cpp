@@ -1,5 +1,4 @@
 #include <iostream>
-#include <spdlog/spdlog.h>
 #include <filesystem>
 #include <fstream>
 
@@ -8,28 +7,6 @@
 
 class Application {
 public:
-    static void init() {
-        // Set global log pattern
-        spdlog::set_pattern("%Y-%m-%d %H:%M:%S.%e [%l] %v");
-        // Set log level to debug to see all logs
-        spdlog::set_level(spdlog::level::info);
-    }
-
-//    static int read_file(const int argc, char* argv[]) {
-//        if (argc != 2) {
-//            spdlog::error("Invalid arguments, filename needed");
-//            return 1;
-//        }
-//
-//        try {
-//            auto fileData = readFile(argv[1]);
-//        } catch (const std::exception& e) {
-//            spdlog::critical("Program failed: {}", e.what());
-//            return 1;
-//        }
-//        return 0;
-//    }
-
     // read ebcdic tape > open with mmap > read first 128 bytes > translate to ASCII > print and save
     static void convertEbcdicFileToAscii(const std::string& filename, const size_t bytesToConvert) {
         const MmapFileReader reader(filename);
@@ -49,28 +26,29 @@ public:
     }
 
     static void scanTapeHeaders(const std::string& filename, const std::string& collection_name) {
-        spdlog::info("Starting tape header scan for file: {}, collection: {}", filename, collection_name);
+        std::cout << "Starting tape header scan for file: " << filename
+                  << ", collection: " << collection_name << std::endl;
 
         try {
-            spdlog::debug("Opening file with memory mapping");
+            std::cout << "Opening file with memory mapping" << std::endl;
             MmapFileReader reader(filename);
-            spdlog::debug("File mapped successfully, size: {} bytes", reader.size());
+            std::cout << "File mapped successfully, size: " << reader.size() << " bytes" << std::endl;
 
-            spdlog::debug("Starting header scan");
+            std::cout << "Starting header scan" << std::endl;
             auto headers = TapeScanner::scanTape(reader, collection_name);
-            spdlog::info("Found {} headers in the tape", headers.size());
+            std::cout << "Found " << headers.size() << " headers in the tape" << std::endl;
 
             // Create grouped JSON output
             nlohmann::json output = createGroupedJson(headers);
 
             // Print to console
-            spdlog::debug("Converting headers to JSON");
+            std::cout << "Converting headers to JSON" << std::endl;
             std::string json_output = output.dump(2);
             std::cout << json_output << std::endl;
 
             // Save to file
             std::string output_filename = filename + "_headers.json";
-            spdlog::info("Saving results to: {}", output_filename);
+            std::cout << "Saving results to: " << output_filename << std::endl;
 
             std::ofstream out_file(output_filename);
             if (!out_file) {
@@ -78,17 +56,17 @@ public:
             }
 
             out_file << json_output;
-            spdlog::info("Scan completed successfully");
+            std::cout << "Scan completed successfully" << std::endl;
 
         } catch (const std::exception& e) {
-            spdlog::error("Failed to scan tape headers: {}", e.what());
+            std::cerr << "Failed to scan tape headers: " << e.what() << std::endl;
             throw;
         }
     }
 
 private:
     static nlohmann::json createGroupedJson(const std::vector<std::tuple<size_t, header_t>>& headers) {
-        spdlog::debug("Creating grouped JSON output");
+        std::cout << "Creating grouped JSON output" << std::endl;
 
         // Map to group headers by collection_name + filename
         std::map<std::pair<std::string, std::string>, std::vector<nlohmann::json>> grouped_headers;
@@ -122,10 +100,8 @@ private:
             output.push_back(group);
         }
 
-        spdlog::debug("JSON creation completed. Found {} unique collection/filename pairs", output.size());
+        std::cout << "JSON creation completed. Found " << output.size()
+                  << " unique collection/filename pairs" << std::endl;
         return output;
     }
 };
-
-
-
