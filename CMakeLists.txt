@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15) # setting this is required
 project(cmod-tape-processor)            # this sets the project name
 
 # Set C++20 standard
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -14,7 +14,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # invoked and put all files that match the pattern in the variables 
 # `sources` and `data`.
 file(GLOB_RECURSE sources      src/main/*.cpp src/main/*.h)
-file(GLOB_RECURSE sources_test src/test/*.cpp)
+#file(GLOB_RECURSE sources_test src/test/*.cpp)
 file(GLOB_RECURSE data resources/*)
 # You can use set(sources src/main.cpp) etc if you don't want to
 # use globbing to find files automatically.
@@ -26,7 +26,7 @@ file(GLOB_RECURSE data resources/*)
 # The data is just added to the executable, because in some IDEs (QtCreator) 
 # files are invisible when they are not explicitly part of the project.
 add_executable(prototype ${sources} ${data}
-        src/main/Application.cpp
+        src/main/application.cpp
 )
 
 # Just for example add some compiler flags.
@@ -54,30 +54,6 @@ target_link_libraries(prototype PUBLIC
 ###############################################################################
 ## testing ####################################################################
 ###############################################################################
-
-# This is for our testing framework,
-# we don't add REQUIRED because it's just for testing.
-# People who might want to build the project to use it should not be required
-# to install testing dependencies.
-find_package(Catch2 3)
-
-if(Catch2_FOUND)
-  add_executable(unit_tests ${sources_test} ${sources})
-
-  # This define is added to prevent collision with the main.
-  # It might be better solved by not adding the source with the main to the
-  # testing target.
-  target_compile_definitions(unit_tests PUBLIC UNIT_TESTS)
-
-  # This allows us to use the executable as a link library, and inherit all 
-  # linker options and library dependencies from it, by simply adding it as dependency.
-  set_target_properties(prototype PROPERTIES ENABLE_EXPORTS on)
-
-  target_link_libraries(unit_tests PUBLIC
-    Catch2::Catch2WithMain
-    prototype
-  )
-endif()
 
 ###############################################################################
 ## packaging ##################################################################

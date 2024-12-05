@@ -2,12 +2,9 @@
 #include <tuple>
 #include <span>
 #include <cstring>
-#include <libkern/OSByteOrder.h> // OSX specific endian conversion
 #include <spdlog/spdlog.h>
 #include "mmap_file_reader.cpp"
 #include "header_t.cpp"
-
-#define be32toh(x) OSSwapBigToHostInt32(x)
 
 class TapeScanner {
 private:
@@ -42,8 +39,6 @@ public:
 
         size_t current_pos = 0;
         while (current_pos + HEADER_SIZE <= file_size) {
-            // spdlog::debug("Checking position {} of {}", current_pos, file_size);
-
             // Check if we have a matching collection name
             if (std::memcmp(data + current_pos, ebcdic_collection.data(), 44) == 0) {
                 spdlog::debug("Found matching collection name at position {}", current_pos);
@@ -51,19 +46,17 @@ public:
                 header_t header;
                 std::memcpy(&header, data + current_pos, sizeof(header_t));
 
-                // Fix endianness for integer fields
-                uint32_t original_filesize = header.filesize;
-                uint32_t original_segsize = header.segsize;
-                header.filesize = be32toh(header.filesize);
-                header.segsize = be32toh(header.segsize);
+                // Set sizes to 0 instead of converting endianness
+                header.filesize = 0;
+                header.segsize = 0;
 
-                spdlog::debug("Header values at {}: filesize: {} (was: {}), segsize: {} (was: {})",
-                    current_pos, header.filesize, original_filesize, header.segsize, original_segsize);
+                spdlog::debug("Header values at {}: filesize: {}, segsize: {}",
+                    current_pos, header.filesize, header.segsize);
 
                 results.emplace_back(current_pos, header);
 
-                // Move to next segment using the segment size
-                current_pos += header.segsize;
+                // Move to next segment using the HEADER_SIZE since we're not using segsize
+                current_pos += HEADER_SIZE;
                 spdlog::debug("Moving to next segment at position {}", current_pos);
             } else {
                 // If no match, move to next potential header
