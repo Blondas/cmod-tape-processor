@@ -5,6 +5,7 @@
 #include <ostream>
 #include <filesystem>
 #include <fstream>
+#include <unordered_map>
 
 #include "mmap_file_reader.cpp"
 #include "ebcdic_converter.cpp"
