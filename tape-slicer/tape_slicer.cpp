@@ -37,9 +37,9 @@ public:
         while (current_pos + HEADER_SIZE <= file_size) {
             // Check if we have a matching header at current position
             if (std::memcmp(data + current_pos, ebcdic_collection.data(), 44) == 0) {
-                // If we have a previous segment, set its end offset
+                // If we have a previous segment, set its end offset to one byte before current header
                 if (!segments.empty()) {
-                    segments.back().data_end_offset = current_pos;
+                    segments.back().data_end_offset = current_pos - 1;
                 }
 
                 // Create new segment
@@ -49,7 +49,7 @@ public:
                     .collection_name = EbcdicConverter::toAscii(std::string_view(data + current_pos, 44)),
                     .file_name = EbcdicConverter::toAscii(std::string_view(data + current_pos + 44, 44)),
                     .data_start_offset = current_pos + HEADER_SIZE,
-                    .data_end_offset = file_size  // Will be updated when we find next header
+                    .data_end_offset = file_size // Read until the actual last byte of the file
                 };
 
                 segments.push_back(std::move(segment));
