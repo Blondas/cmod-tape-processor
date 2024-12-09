@@ -7,7 +7,6 @@
 #include "tape_slicer.cpp"
 #include <fstream>
 #include <chrono>
-#include <format>
 #include <unordered_set>
 
 int main(const int argc, char* argv[]) {
@@ -21,10 +20,8 @@ int main(const int argc, char* argv[]) {
     const std::string collection_name = argv[2];
 
     try {
-        // 1. Create output directory with datetime and file
-        auto now = std::chrono::system_clock::now();
-        auto datetime_str = std::format("{:%Y-%m-%d_%H-%M-%S}", now);
-        std::filesystem::path output_dir = std::filesystem::path("output") / datetime_str;
+        // 1. Create output directory
+        std::filesystem::path output_dir = std::filesystem::path("output");
         std::filesystem::create_directories(output_dir);
 
         // 2. Create a memory-mapped reader for your tape file

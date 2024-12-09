@@ -92,7 +92,7 @@ public:
                 // Write each segment's data range
                 for (const TapeSegment* segment : file_segments) {
                     // Calculate exact byte range (inclusive range)
-                    size_t data_length = segment->data_end_offset - segment->data_start_offset + 1;
+                    size_t data_length = segment->data_end_offset - segment->data_start_offset;
 
                     // Write the segment data
                     output_file.write(
