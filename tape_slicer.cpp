@@ -49,7 +49,7 @@ public:
                     .collection_name = EbcdicConverter::toAscii(std::string_view(data + current_pos, 44)),
                     .file_name = EbcdicConverter::toAscii(std::string_view(data + current_pos + 44, 44)),
                     .data_offset = current_pos + HEADER_SIZE,
-                    .data_size = current_pos + HEADER_SIZE + 1 // Read until the actual last byte of the file
+                    .data_size = file_size - current_pos + HEADER_SIZE + 1 // Read until the actual last byte of the file
                 };
 
                 segments.push_back(std::move(segment));
