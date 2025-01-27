@@ -21,7 +21,7 @@ cd "$SCRIPT_DIR" || exit
 mkdir $OUTPUT_DIR
 
 g++ -std=c++20 \
-  -maix64 \
+  -m64 \
   main.cpp \
   ebcdic_converter.cpp \
   mmap_file_reader.cpp \
