@@ -10,18 +10,19 @@
 #include <unordered_set>
 
 int main(const int argc, char* argv[]) {
-    if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " <tape-location> <collection-name>\n";
-        std::cerr << "Example: " << argv[0] << " resources/TAPE1.ebcdic ZIA6.DATA\n";
+    if (argc != 4) {
+        std::cerr << "Usage: " << argv[0] << " <tape-location> <collection-name> <output-directory>\n";
+        std::cerr << "Example: " << argv[0] << " resources/TAPE1.ebcdic ZIA6.DATA output/my-output-dir\n";
         return 1;
     }
 
     const std::string tape_location = argv[1];
     const std::string collection_name = argv[2];
+    const std::string output_dir_str = argv[3];
 
     try {
         // 1. Create output directory
-        std::filesystem::path output_dir = std::filesystem::path("output");
+        std::filesystem::path output_dir = std::filesystem::path(output_dir_str);
         std::filesystem::create_directories(output_dir);
 
         // 2. Create a memory-mapped reader for your tape file
