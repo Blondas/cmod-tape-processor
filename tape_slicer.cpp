@@ -1,6 +1,5 @@
 #include <vector>
 #include <string>
-#include <string_view>
 #include <cstring>
 #include <ostream>
 #include <filesystem>
@@ -23,7 +22,7 @@ struct TapeSegment {
 
 class TapeSlicer {
 public:
-    static std::vector<TapeSegment> scanTape(const MmapFileReader& reader, std::string_view collection_name) {
+    static std::vector<TapeSegment> scanTape(const MmapFileReader& reader, std::string& collection_name) {
         auto start_time = std::chrono::steady_clock::now();
         std::cout << "Starting tape scan for collection: " << collection_name << std::endl;
 
@@ -50,8 +49,8 @@ public:
                 TapeSegment segment{
                     .segment_id = current_id++,
                     .header_offset = current_pos,
-                    .collection_name = EbcdicConverter::toAscii(std::string_view(data + current_pos, 44)),
-                    .file_name = EbcdicConverter::toAscii(std::string_view(data + current_pos + 44, 44)),
+                    .collection_name = EbcdicConverter::toAscii(std::string(data + current_pos, 44)),
+                    .file_name = EbcdicConverter::toAscii(std::string(data + current_pos + 44, 44)),
                     .data_offset = current_pos + HEADER_SIZE,
                     .data_size = file_size - current_pos + HEADER_SIZE + 1 // Read until the actual last byte of the file
                 };
