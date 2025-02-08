@@ -31,6 +31,10 @@ int main(const int argc, char* argv[]) {
         // 3. Scan the tape for segments with a specific collection name
         auto segments = TapeSlicer::scanTape(reader, collection_name);
 
+        // 4. Save the segments metadata
+        std::ofstream file_output(output_dir / "segments.csv");
+        TapeSlicer::writeSegmentsCsv(segments, file_output);
+        std::cout << "Segments metadata saved to segments.csv\n";
         std::cout << "Found " << segments.size() << " segments\n";
 
         std::unordered_set<std::string> unique_files;
@@ -39,7 +43,7 @@ int main(const int argc, char* argv[]) {
         }
         std::cout << "Containing " << unique_files.size() << " unique files\n";
 
-        // 4. Save the concatenated segments to an output directory
+        // 5. Save the concatenated segments to an output directory
         bool success = TapeSlicer::saveSegments(reader, segments, output_dir);
 
         if (!success) {
@@ -49,13 +53,6 @@ int main(const int argc, char* argv[]) {
           std::cout << "Successfully saved segments data to files\n";
         }
 
-
-        // 5. Save the segments metadata
-        std::ofstream file_output(output_dir / "segments.csv");
-
-        TapeSlicer::writeSegmentsCsv(segments, file_output);
-
-        std::cout << "Segments metadata saved to segments.csv\n";
         return 0;
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << "\n";

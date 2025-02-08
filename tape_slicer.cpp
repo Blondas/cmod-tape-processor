@@ -119,10 +119,11 @@ public:
 
                     if (!output_file) {
                         std::cerr << "Failed writing segment " << segment->segment_id
-                                << " to file: " << filename
-                                << " (offset: " << segment->data_offset
-                                << ", size: " << segment->data_size << ")" << std::endl;
-                        throw std::runtime_error("Failed writing to file: " + filename);
+        						<< " to file: " << filename
+        						<< " (offset: " << segment->data_offset
+        						<< ", size: " << segment->data_size
+        						<< "), system error: " << std::strerror(errno) << std::endl;
+                        throw std::runtime_error("Failed writing to file: " + filename + " - " + std::strerror(errno));
                     }
                     total_size += segment->data_size;
                 }
