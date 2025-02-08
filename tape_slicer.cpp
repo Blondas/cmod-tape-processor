@@ -7,6 +7,7 @@
 #include <fstream>
 #include <unordered_map>
 #include <iostream>
+#include <chrono>
 #include "mmap_file_reader.cpp"
 #include "ebcdic_converter.cpp"
 
@@ -23,6 +24,9 @@ struct TapeSegment {
 class TapeSlicer {
 public:
     static std::vector<TapeSegment> scanTape(const MmapFileReader& reader, std::string_view collection_name) {
+        auto start_time = std::chrono::steady_clock::now();
+        std::cout << "Starting tape scan for collection: " << collection_name << std::endl;
+
         std::vector<TapeSegment> segments;
         const char* data = reader.data();
         const size_t file_size = reader.size();
@@ -62,14 +66,22 @@ public:
             }
         }
 
+        auto end_time = std::chrono::steady_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+        std::cout << "Scan completed in " << duration.count() << "ms. Found " << segments.size() << " segments." << std::endl;
+
         return segments;
     }
 
     static bool saveSegments(const MmapFileReader& reader,
                            const std::vector<TapeSegment>& segments,
                            const std::filesystem::path& output_dir) {
+        auto start_time = std::chrono::steady_clock::now();
+        std::cout << "Starting to save segments to: " << output_dir << std::endl;
+
         try {
             std::filesystem::create_directories(output_dir);
+            std::cout << "Created output directory" << std::endl;
 
             // Group segments by trimmed filename
             std::unordered_map<std::string, std::vector<const TapeSegment*>> segments_by_file;
@@ -78,7 +90,12 @@ public:
                 segments_by_file[trimmed_name].push_back(&segment);
             }
 
+            std::cout << "Grouped " << segments.size() << " segments into "
+                     << segments_by_file.size() << " unique files" << std::endl;
+
             const char* tape_data = reader.data();
+            size_t files_processed = 0;
+            size_t total_files = segments_by_file.size();
 
             // Process each unique file
             for (const auto& [filename, file_segments] : segments_by_file) {
@@ -86,10 +103,12 @@ public:
                 std::ofstream output_file(output_path, std::ios::binary);
 
                 if (!output_file) {
+                    std::cerr << "Failed to create output file: " << filename << std::endl;
                     throw std::runtime_error("Failed to create output file: " + filename);
                 }
 
                 // Write each segment's data range
+                size_t total_size = 0;
                 for (const TapeSegment* segment : file_segments) {
 
                     // Write the segment data
@@ -99,15 +118,30 @@ public:
                     );
 
                     if (!output_file) {
+                        std::cerr << "Failed writing segment " << segment->segment_id
+                                << " to file: " << filename
+                                << " (offset: " << segment->data_offset
+                                << ", size: " << segment->data_size << ")" << std::endl;
                         throw std::runtime_error("Failed writing to file: " + filename);
                     }
+                    total_size += segment->data_size;
+                }
+
+                files_processed++;
+                if (files_processed % 100 == 0 || files_processed == total_files) {
+                    std::cout << "Processed " << files_processed << "/" << total_files
+                             << " files (" << (files_processed * 100 / total_files) << "%)" << std::endl;
                 }
             }
 
+            auto end_time = std::chrono::steady_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+            std::cout << "Successfully saved all segments in " << duration.count() << "ms" << std::endl;
             return true;
         }
         catch (const std::exception& e) {
             // Log error or handle as needed
+            std::cerr << "Error saving segments: " << e.what() << std::endl;
             return false;
         }
     }
