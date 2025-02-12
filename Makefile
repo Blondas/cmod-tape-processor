@@ -1,7 +1,7 @@
 CC=g++
 CFLAGS=-std=c++20 -maix64
 
-objects = main.cpp ebcdic_converter.cpp mmap_file_reader.cpp tape_slicer.cpp
+objects = slicer.c
 
-tslicer: $(objects)
+slicer: $(objects)
 	$(CC) $(CFAGS) $^ -o $@
